@@ -1,6 +1,7 @@
 #!groovy
 
-node {
+pipeline {
+    agent any
     try {
         stage('Checkout') {
             checkout scm
@@ -10,13 +11,24 @@ node {
             slackSend color: "warning", message: "Started `${env.JOB_NAME}#${env.BUILD_NUMBER}`\n\n_The changes:_\n${lastChanges}"
         }
 
-        stage('Test') {
+         stage('Test') {
+            echo ' All test of this apps '
             sh '''
                virtualenv env -p python3.10
                . env/bin/activate
                env/bin/pip install -r requirements.txt
                env/bin/python3.10 manage.py test --testrunner=blog.tests.test_runners.NoDbTestRunner
             '''
+        }
+
+        stage('build Image') {
+            echo 'Building Docker Image'
+            withCredentials([usernamePassword(credentialsId: 'docker-hub-repo', passwordVariable:'PASS' ,usernameVariable: 'USER')]) {
+                sh 'docker build -t tafitasoa77/blog_drf_project_demo:dra-1.0 .'
+                sh "echo $PASS | docker login -u $USER --password -stdin"
+                sh 'docker push tafitasoa77/blog_drf_project_demo:dra-1.0'
+            }
+           
         }
 
         stage('Deploy') {
