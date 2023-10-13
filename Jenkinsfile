@@ -9,18 +9,21 @@ pipeline {
         }
 
         stage('Build') {
+
+            when {
+                expression {
+                    BRANCH_NAME == 'prod'
+                }
+            }
             steps {
                 echo 'Building..'
             }
         }
 
         stage('Deploy') {
-            when {
-                anyOf {
-                    branch 'master'
-                    branch 'dev'
-                    branch 'preprod'
-                    branch 'prod'
+             when {
+                expression {
+                    BRANCH_NAME == 'prod'
                 }
             }
             steps {
